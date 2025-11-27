@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freshno.Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #cc0000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .skull-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+            font-size: 100px;
+            overflow: hidden;
+        }
+
+        .skull-bg::before {
+            content: '💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀 💀';
+            position: absolute;
+            animation: scroll 20s linear infinite;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-box {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px;
+            border-radius: 10px;
+            border: 3px solid #000;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 #000;
+        }
+
+        .skull-icon {
+            font-size: 60px;
+            margin: 20px 0;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            margin-bottom: 30px;
+            color: #ccc;
+        }
+
+        .error-msg {
+            background: rgba(255, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            color: #fff;
+            display: none;
+        }
+
+        .success-msg {
+            background: rgba(0, 255, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            color: #fff;
+            display: none;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #000;
+            border: 2px solid #cc0000;
+            color: #fff;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ff0000;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #000;
+            border: 2px solid #cc0000;
+            color: #fff;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #cc0000;
+            border-color: #000;
+            transform: scale(1.05);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chat-container {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #000;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #cc0000;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(0, 0, 0, 0.9);
+            border-right: 3px solid #000;
+            overflow-y: auto;
+        }
+
+        .room-category {
+            padding: 15px;
+            border-bottom: 2px solid #cc0000;
+        }
+
+        .room-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-badge {
+            font-size: 10px;
+            background: #cc0000;
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        .room-item {
+            padding: 8px 10px;
+            margin: 5px 0;
+            background: rgba(204, 0, 0, 0.2);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .room-item:hover {
+            background: rgba(204, 0, 0, 0.5);
+        }
+
+        .room-item.active {
+            background: #cc0000;
+        }
+
+        .sub-room {
+            padding: 6px 10px;
+            margin: 3px 0 3px 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 3px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .sub-room:hover {
+            background: rgba(204, 0, 0, 0.3);
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 2px solid #cc0000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .media-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .media-btn {
+            padding: 8px 15px;
+            background: #000;
+            border: 2px solid #cc0000;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .media-btn:hover {
+            background: #cc0000;
+        }
+
+        .media-btn.active {
+            background: #cc0000;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 5px;
+            border-left: 3px solid #cc0000;
+        }
+
+        .message-file {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(204, 0, 0, 0.2);
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .message-file a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .message-file a:hover {
+            color: #cc0000;
+        }
+
+        .video-grid {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .video-container {
+            width: 200px;
+            height: 150px;
+            background: #000;
+            border: 2px solid #cc0000;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-label {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .message-user {
+            font-weight: bold;
+            color: #cc0000;
+            margin-bottom: 5px;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 2px solid #cc0000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            margin: 0;
+        }
+
+        .send-btn {
+            width: auto;
+            padding: 15px 30px;
+            margin: 0;
+        }
+
+        .file-btn {
+            width: auto;
+            padding: 15px 20px;
+            margin: 0;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: #cc0000;
+            border: 2px solid #000;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            background: #000;
+            border-color: #cc0000;
+        }
+
+        .register-link {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #ccc;
+            cursor: pointer;
+        }
+
+        .register-link:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="skull-bg"></div>
+    
+    <div class="container" id="loginContainer">
+        <div class="login-box">
+            <div class="logo">FRESHNO.CHAT</div>
+            <div class="skull-icon">💀</div>
+            <div class="subtitle">HIGH SECURITY CHAT PLATFORM</div>
+            
+            <div class="error-msg" id="errorMsg"></div>
+            <div class="success-msg" id="successMsg"></div>
+            
+            <input type="email" id="protonEmail" placeholder="ProtonMail Email Only" />
+            <input type="password" id="password" placeholder="Password" />
+            <button onclick="login()" id="loginBtn">LOGIN VIA PROTONMAIL</button>
+            
+            <div class="register-link" onclick="toggleRegister()">
+                <span id="toggleText">Don't have an account? Register</span>
+            </div>
+            
+            <div style="margin-top: 20px; font-size: 12px; color: #ccc;">
+                🔒 Military-Grade Encryption | Hacker Proof | Malware Protected
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="header">
+            <div class="logo">💀 FRESHNO.CHAT</div>
+            <div>
+                <span id="userEmail" style="margin-right: 20px;"></span>
+                <button class="logout-btn" onclick="logout()">LOGOUT</button>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="room-category">
+                    <div class="room-title">
+                        PUBLIC
+                        <span class="room-badge">FREE</span>
+                    </div>
+                    <div class="room-item active" onclick="selectRoom('public-main')">Main Room</div>
+                    <div class="sub-room" onclick="selectRoom('public-1')">💀 Sub Room 1</div>
+                    <div class="sub-room" onclick="selectRoom('public-2')">💀 Sub Room 2</div>
+                    <div class="sub-room" onclick="selectRoom('public-3')">💀 Sub Room 3</div>
+                    <div class="sub-room" onclick="selectRoom('public-4')">💀 Sub Room 4</div>
+                    <div class="sub-room" onclick="selectRoom('public-5')">💀 Sub Room 5</div>
+                    <div class="sub-room" onclick="selectRoom('public-6')">💀 Sub Room 6</div>
+                    <div class="sub-room" onclick="selectRoom('public-7')">💀 Sub Room 7</div>
+                    <div class="sub-room" onclick="selectRoom('public-8')">💀 Sub Room 8</div>
+                    <div class="sub-room" onclick="selectRoom('public-9')">💀 Sub Room 9</div>
+                    <div class="sub-room" onclick="selectRoom('public-10')">💀 Sub Room 10</div>
+                </div>
+
+                <div class="room-category">
+                    <div class="room-title">
+                        PRIVATE
+                        <span class="room-badge">$10 BTC</span>
+                    </div>
+                    <div class="room-item" onclick="selectRoom('private')">
+                        🔒 Private Room (100 max)
+                    </div>
+                </div>
+
+                <div class="room-category">
+                    <div class="room-title">
+                        SPECIAL
+                        <span class="room-badge">$50 BTC</span>
+                    </div>
+                    <div class="room-item" onclick="selectRoom('special')">
+                        ⭐ Special Room (30 max)
+                    </div>
+                </div>
+
+                <div class="room-category">
+                    <div class="room-title">
+                        VIP
+                        <span class="room-badge">$100 BTC</span>
+                    </div>
+                    <div class="room-item" onclick="selectRoom('vip')">
+                        👑 VIP Room (10 max)
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-area">
+                <div class="chat-header">
+                    <div>
+                        <strong id="currentRoom">PUBLIC - Main Room</strong>
+                        <span style="margin-left: 20px; font-size: 14px;" id="userCount">👥 0 users online</span>
+                    </div>
+                    <div class="media-controls">
+                        <button class="media-btn" id="micBtn" onclick="toggleMic()">🎤 MIC</button>
+                        <button class="media-btn" id="camBtn" onclick="toggleCamera()">📹 CAMERA</button>
+                        <button class="media-btn" onclick="shareScreen()">🖥️ SCREEN</button>
+                    </div>
+                </div>
+
+                <div class="video-grid" id="videoGrid"></div>
+
+                <div class="messages" id="messages">
+                    <div class="message">
+                        <div class="message-user">💀 System</div>
+                        <div>Welcome to Freshno.Chat! You are in the PUBLIC room.</div>
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <button class="file-btn" onclick="shareFile()">📎 FILE</button>
+                    <input type="text" id="messageInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)" />
+                    <button class="send-btn" onclick="sendMessage()">SEND</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let token = localStorage.getItem('token');
+        let socket = null;
+        let currentRoom = 'public-main';
+        let isRegistering = false;
+        let micActive = false;
+        let cameraActive = false;
+        let localStream = null;
+        let peers = {};
+
+        // Check if already logged in
+        if (token) {
+            connectSocket();
+            showChat();
+        }
+
+        function showError(msg) {
+            const errorEl = document.getElementById('errorMsg');
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+            setTimeout(() => errorEl.style.display = 'none', 5000);
+        }
+
+        function showSuccess(msg) {
+            const successEl = document.getElementById('successMsg');
+            successEl.textContent = msg;
+            successEl.style.display = 'block';
+            setTimeout(() => successEl.style.display = 'none', 3000);
+        }
+
+        function toggleRegister() {
+            isRegistering = !isRegistering;
+            const btn = document.getElementById('loginBtn');
+            const toggle = document.getElementById('toggleText');
+            
+            if (isRegistering) {
+                btn.textContent = 'REGISTER VIA PROTONMAIL';
+                toggle.textContent = 'Already have an account? Login';
+            } else {
+                btn.textContent = 'LOGIN VIA PROTONMAIL';
+                toggle.textContent = "Don't have an account? Register";
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('protonEmail').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!email || !password) {
+                showError('Please enter email and password');
+                return;
+            }
+
+            if (!email.endsWith('@protonmail.com') && !email.endsWith('@proton.me')) {
+                showError('❌ Only ProtonMail addresses are allowed!');
+                return;
+            }
+
+            if (password.length < 8) {
+                showError('❌ Password must be at least 8 characters!');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'LOADING...';
+
+            try {
+                const endpoint = isRegistering ? '/api/register' : '/api/login';
+                const response = await fetch(API_URL + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('userEmail', email);
+                    showSuccess(isRegistering ? '✅ Registration successful!' : '✅ Login successful!');
+                    setTimeout(() => {
+                        connectSocket();
+                        showChat();
+                    }, 1000);
+                } else {
+                    showError(data.error || 'Login failed');
+                }
+            } catch (error) {
+                showError('⚠️ Cannot connect to server. Make sure server is running!');
+                console.error('Login error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = isRegistering ? 'REGISTER VIA PROTONMAIL' : 'LOGIN VIA PROTONMAIL';
+            }
+        }
+
+        function connectSocket() {
+            socket = io(API_URL, {
+                auth: { token }
+            });
+
+            socket.on('connect', () => {
+                console.log('Connected to server');
+                socket.emit('join-room', currentRoom);
+            });
+
+            socket.on('room-joined', (data) => {
+                updateUserCount(data.userCount);
+            });
+
+            socket.on('user-joined', (data) => {
+                addSystemMessage(`${data.email} joined the room`);
+                updateUserCount(data.roomUsers);
+            });
+
+            socket.on('user-left', (data) => {
+                addSystemMessage(`${data.email} left the room`);
+            });
+
+            socket.on('new-message', (data) => {
+                addMessage(data.user, data.text);
+            });
+
+            socket.on('file-shared', (data) => {
+                const messagesDiv = document.getElementById('messages');
+                const messageEl = document.createElement('div');
+                messageEl.className = 'message';
+                messageEl.innerHTML = `
+                    <div class="message-user">${data.user}</div>
+                    <div>Shared a file:</div>
+                    <div class="message-file">
+                        <a href="${data.fileUrl}" target="_blank" download>
+                            📎 ${data.fileName} (${formatFileSize(data.fileSize)})
+                        </a>
+                    </div>
+                `;
+                messagesDiv.appendChild(messageEl);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+
+            socket.on('error', (data) => {
+                showError(data.message);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+            });
+        }
+
+        function showChat() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'flex';
+            document.getElementById('userEmail').textContent = localStorage.getItem('userEmail');
+        }
+
+        function logout() {
+            if (socket) socket.disconnect();
+            localStorage.removeItem('token');
+            localStorage.removeItem('userEmail');
+            token = null;
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('messages').innerHTML = `
+                <div class="message">
+                    <div class="message-user">💀 System</div>
+                    <div>Welcome to Freshno.Chat! You are in the PUBLIC room.</div>
+                </div>
+            `;
+        }
+
+        function selectRoom(room) {
+            if (!socket) return;
+
+            currentRoom = room;
+            const roomNames = {
+                'public-main': 'PUBLIC - Main Room',
+                'public-1': 'PUBLIC - Sub Room 1',
+                'public-2': 'PUBLIC - Sub Room 2',
+                'public-3': 'PUBLIC - Sub Room 3',
+                'public-4': 'PUBLIC - Sub Room 4',
+                'public-5': 'PUBLIC - Sub Room 5',
+                'public-6': 'PUBLIC - Sub Room 6',
+                'public-7': 'PUBLIC - Sub Room 7',
+                'public-8': 'PUBLIC - Sub Room 8',
+                'public-9': 'PUBLIC - Sub Room 9',
+                'public-10': 'PUBLIC - Sub Room 10',
+                'private': 'PRIVATE Room',
+                'special': 'SPECIAL Room',
+                'vip': 'VIP Room'
+            };
+
+            if (room === 'private' || room === 'special' || room === 'vip') {
+                showError('💰 Payment required to access this room. Bitcoin payment integration coming soon!');
+                return;
+            }
+
+            document.getElementById('currentRoom').textContent = roomNames[room];
+            document.getElementById('messages').innerHTML = '';
+            addSystemMessage(`You joined ${roomNames[room]}`);
+            
+            socket.emit('join-room', room);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message && socket) {
+                socket.emit('send-message', { message });
+                input.value = '';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function addMessage(user, text) {
+            const messagesDiv = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            messageEl.innerHTML = `
+                <div class="message-user">${user}</div>
+                <div>${text}</div>
+            `;
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            addMessage('💀 System', text);
+        }
+
+        function updateUserCount(count) {
+            document.getElementById('userCount').textContent = `👥 ${count} users online`;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        async function toggleMic() {
+            try {
+                if (!micActive) {
+                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    micActive = true;
+                    document.getElementById('micBtn').classList.add('active');
+                    showSuccess('🎤 Microphone activated!');
+                } else {
+                    if (localStream) {
+                        localStream.getTracks().forEach(track => track.stop());
+                        localStream = null;
+                    }
+                    micActive = false;
+                    document.getElementById('micBtn').classList.remove('active');
+                    showSuccess('🎤 Microphone deactivated!');
+                }
+            } catch (error) {
+                showError('❌ Could not access microphone. Please allow microphone access.');
+                console.error('Mic error:', error);
+            }
+        }
+
+        async function toggleCamera() {
+            try {
+                if (!cameraActive) {
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: true, 
+                        video: { width: 640, height: 480 } 
+                    });
+                    cameraActive = true;
+                    document.getElementById('camBtn').classList.add('active');
+                    
+                    // Display local video
+                    const videoGrid = document.getElementById('videoGrid');
+                    const videoContainer = document.createElement('div');
+                    videoContainer.className = 'video-container';
+                    videoContainer.id = 'local-video';
+                    videoContainer.innerHTML = `
+                        <video autoplay muted playsinline></video>
+                        <div class="video-label">You</div>
+                    `;
+                    videoGrid.appendChild(videoContainer);
+                    
+                    const video = videoContainer.querySelector('video');
+                    video.srcObject = localStream;
+                    
+                    showSuccess('📹 Camera activated!');
+                } else {
+                    if (localStream) {
+                        localStream.getTracks().forEach(track => track.stop());
+                        localStream = null;
+                    }
+                    cameraActive = false;
+                    document.getElementById('camBtn').classList.remove('active');
+                    
+                    // Remove local video
+                    const localVideo = document.getElementById('local-video');
+                    if (localVideo) localVideo.remove();
+                    
+                    showSuccess('📹 Camera deactivated!');
+                }
+            } catch (error) {
+                showError('❌ Could not access camera. Please allow camera access.');
+                console.error('Camera error:', error);
+            }
+        }
+
+        async function shareScreen() {
+            try {
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+                    video: true 
+                });
+                showSuccess('🖥️ Screen sharing started!');
+                
+                // You can add screen stream to video grid here
+                screenStream.getVideoTracks()[0].onended = () => {
+                    showSuccess('🖥️ Screen sharing stopped!');
+                };
+            } catch (error) {
+                showError('❌ Could not share screen.');
+                console.error('Screen share error:', error);
+            }
+        }
+
+        async function shareFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (file.size > 50 * 1024 * 1024) {
+                    showError('❌ File too large! Max 50MB');
+                    return;
+                }
+
+                showSuccess('⏳ Uploading file...');
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch(API_URL + '/api/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && socket) {
+                        socket.emit('share-file', {
+                            fileName: file.name,
+                            fileUrl: data.file.url,
+                            fileSize: file.size,
+                            fileType: file.type
+                        });
+                        showSuccess(`✅ File "${file.name}" uploaded!`);
+                    } else {
+                        showError('❌ Upload failed!');
+                    }
+                } catch (error) {
+                    showError('❌ Upload failed! Make sure server is running.');
+                    console.error('Upload error:', error);
+                }
+            };
+            input.click();
+        }
+    </script>
+</body>
+</html>
